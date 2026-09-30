@@ -152,14 +152,6 @@ class MLSAPI_Ajax {
             }
         }
 
-        // Ensure filesystem permissions constants exist
-        if ( ! defined( 'FS_CHMOD_FILE' ) ) {
-            define( 'FS_CHMOD_FILE', ( file_exists( ABSPATH . 'index.php' ) ? ( fileperms( ABSPATH . 'index.php' ) & 0777 | 0644 ) : 0644 ) );
-        }
-        if ( ! defined( 'FS_CHMOD_DIR' ) ) {
-            define( 'FS_CHMOD_DIR', ( file_exists( ABSPATH ) ? ( fileperms( ABSPATH ) & 0777 | 0755 ) : 0755 ) );
-        }
-
         // Initialize WordPress Filesystem
         require_once ABSPATH . 'wp-admin/includes/file.php';
         global $wp_filesystem;
@@ -193,9 +185,10 @@ class MLSAPI_Ajax {
                 $saved = $wp_filesystem->put_contents( $existing_file, $image_binary, $file_mode );
             }
             if ( ! $saved ) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
                 $saved = ( false !== @file_put_contents( $existing_file, $image_binary ) );
-                if ( $saved && function_exists( 'chmod' ) ) {
-                    @chmod( $existing_file, $file_mode );
+                if ( $saved && ! empty( $wp_filesystem ) && method_exists( $wp_filesystem, 'chmod' ) ) {
+                    $wp_filesystem->chmod( $existing_file, $file_mode );
                 }
             }
 
@@ -253,9 +246,10 @@ class MLSAPI_Ajax {
                 $saved = $wp_filesystem->put_contents( $file_path, $image_binary, $file_mode );
             }
             if ( ! $saved ) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
                 $saved = ( false !== @file_put_contents( $file_path, $image_binary ) );
-                if ( $saved && function_exists( 'chmod' ) ) {
-                    @chmod( $file_path, $file_mode );
+                if ( $saved && ! empty( $wp_filesystem ) && method_exists( $wp_filesystem, 'chmod' ) ) {
+                    $wp_filesystem->chmod( $file_path, $file_mode );
                 }
             }
 

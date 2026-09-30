@@ -48,7 +48,11 @@ $mlsapi_credits_total = isset( $mlsapi_billing_data['plan']['totalCreditsAvailab
             <div class="mlsapi-header-badges">
                 <?php if ( $mlsapi_is_configured ) : ?>
                     <span class="mlsapi-badge-dark mlsapi-badge-active">
-                        <span class="mlsapi-live-dot"></span> <?php echo esc_html( sprintf( __( 'Connected · %s Plan', 'mlsapi-studio' ), $mlsapi_plan_tier ) ); ?>
+                        <span class="mlsapi-live-dot"></span>
+                        <?php
+                        /* translators: %s: Subscription plan tier (e.g. Free, Starter, Pro). */
+                        echo esc_html( sprintf( __( 'Connected · %s Plan', 'mlsapi-studio' ), $mlsapi_plan_tier ) );
+                        ?>
                     </span>
                 <?php else : ?>
                     <span class="mlsapi-badge-dark" style="color: #ff9800; border-color: rgba(255, 152, 0, 0.4);">
@@ -153,7 +157,8 @@ $mlsapi_credits_total = isset( $mlsapi_billing_data['plan']['totalCreditsAvailab
                         <span>
                             <?php 
                             if ( $mlsapi_is_configured ) {
-                                echo esc_html( sprintf( __( '%s Tier · %s total credits available', 'mlsapi-studio' ), $mlsapi_plan_tier, number_format( $mlsapi_credits_total ) ) );
+                                /* translators: 1: Subscription plan tier (e.g. Free, Starter, Pro), 2: Number of available credits. */
+                                echo esc_html( sprintf( __( '%1$s Tier · %2$s total credits available', 'mlsapi-studio' ), $mlsapi_plan_tier, number_format_i18n( $mlsapi_credits_total ) ) );
                             } else {
                                 esc_html_e( 'Connect your API key to view live subscription and credit allowance.', 'mlsapi-studio' );
                             }
