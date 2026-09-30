@@ -1,0 +1,8 @@
+# Separate project, not part of this repo
+screenglow/
+
+.DS_Store
+*.zip
+node_modules/
+vendor/
+.env
