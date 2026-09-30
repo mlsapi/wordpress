@@ -1,6 +1,6 @@
 /**
  * MLS API Studio Modal Controller
- * Coordinates editor lifecycle, image loading, UI state, pill selectors, and ribbon photos.
+ * Coordinates editor lifecycle, image loading, UI state, tool selection, and job progress.
  */
 (function($) {
     'use strict';
@@ -13,65 +13,7 @@
             generatedImageUrl: null,
             currentJobId: null,
             activeTool: 'stage',
-            isProcessing: false,
-            ribbonLoaded: false
-        },
-
-        toolMeta: {
-            'stage': {
-                title: 'Stage room',
-                desc: 'Furnish an empty room',
-                btnText: 'Stage room',
-                showWatermark: true
-            },
-            'restyle': {
-                title: 'Restyle room',
-                desc: 'Change interior aesthetic to another design theme',
-                btnText: 'Restyle room',
-                showWatermark: true
-            },
-            'empty': {
-                title: 'Empty room',
-                desc: 'Remove all furniture and decor to reveal bare architectural space',
-                btnText: 'Empty room',
-                showWatermark: true
-            },
-            'declutter': {
-                title: 'Declutter room',
-                desc: 'Remove tenant mess, boxes, and cables while keeping core furniture',
-                btnText: 'Declutter room',
-                showWatermark: true
-            },
-            'wall-colors': {
-                title: 'Paint room',
-                desc: 'Preview designer paint colors on interior walls',
-                btnText: 'Paint room',
-                showWatermark: false
-            },
-            'twilight': {
-                title: 'Twilight conversion',
-                desc: 'Convert daytime exteriors to warm twilight or replace washed-out skies',
-                btnText: 'Apply Twilight',
-                showWatermark: false
-            },
-            'enhance-exterior': {
-                title: 'Curb appeal',
-                desc: 'Enhance lawn, blue sky, pool water, and landscaping',
-                btnText: 'Enhance curb appeal',
-                showWatermark: false
-            },
-            'upscale': {
-                title: 'Upscale photo',
-                desc: 'Sharpen architectural details and enhance resolution to 4K',
-                btnText: 'Upscale to 4K',
-                showWatermark: false
-            },
-            'floorplan-3d': {
-                title: '3D floor plan',
-                desc: 'Convert 2D blueprints or sketches into 3D isometric cutaways',
-                btnText: 'Render 3D plan',
-                showWatermark: false
-            }
+            isProcessing: false
         },
 
         init: function() {
@@ -83,14 +25,16 @@
             this.$backdrop           = $('#mlsapi-modal-backdrop');
             this.$modal              = $('#mlsapi-modal');
             this.$closeBtn           = $('#mlsapi-modal-close');
-            this.$toolBtns           = $('.mlsapi-tool-btn');
+            this.$toolItems          = $('.mlsapi-tool-item');
             this.$dropzoneState      = $('#mlsapi-dropzone-state');
             this.$canvasState        = $('#mlsapi-canvas-state');
             this.$overlay            = $('#mlsapi-processing-overlay');
-            this.$progressBar        = $('#mlsapi-progress-bar');
+            this.$overlayProgressFill    = $('#mlsapi-overlay-progress-fill');
+            this.$overlayProgressPercent = $('#mlsapi-overlay-percent');
+            this.$overlayStepLabel       = $('#mlsapi-overlay-step-label');
+            this.$progressFill       = $('#mlsapi-progress-fill');
             this.$progressPercent    = $('#mlsapi-progress-percent');
-            this.$stepTitle          = $('#mlsapi-step-title');
-            this.$stepDesc           = $('#mlsapi-step-desc');
+            this.$stepLabel          = $('#mlsapi-step-label');
             this.$imgBefore          = $('#mlsapi-img-before');
             this.$imgAfter           = $('#mlsapi-img-after');
             this.$generateBtn        = $('#mlsapi-generate-btn');
@@ -98,17 +42,13 @@
             this.$saveBtn            = $('#mlsapi-save-btn');
             this.$replaceBtn         = $('#mlsapi-replace-btn');
             this.$downloadBtn        = $('#mlsapi-download-btn');
-            this.$outputActions      = $('#mlsapi-output-actions');
             this.$selectMediaBtn     = $('#mlsapi-select-media-btn');
             this.$browseFileBtn      = $('#mlsapi-browse-file-btn');
             this.$fileInput          = $('#mlsapi-file-input');
-            this.$toolTitle          = $('#mlsapi-current-tool-title');
-            this.$toolDesc           = $('#mlsapi-current-tool-desc');
-            this.$ribbonScroll       = $('#mlsapi-ribbon-scroll');
-            this.$ribbonAddBtn       = $('#mlsapi-ribbon-add-btn');
-            this.$watermarkBadge     = $('#mlsapi-watermark-badge');
-            this.$watermarkNotice    = $('#mlsapi-compliance-notice');
-            this.$watermarkCheckbox  = $('#mlsapi-include-watermark');
+            this.$metaFilename       = $('#mlsapi-meta-filename');
+            this.$metaDimensions     = $('#mlsapi-meta-dimensions');
+            this.$paramBoxes         = $('#mlsapi-param-boxes');
+            this.$twilightBox        = $('#mlsapi-twilight-box');
         },
 
         bindEvents: function() {
@@ -123,57 +63,22 @@
             });
 
             // Tool switching
-            this.$toolBtns.on('click', function() {
+            $(document).on('click', '.mlsapi-tool-item', function() {
                 var tool = $(this).data('tool');
                 self.switchTool(tool);
             });
 
-            // Style Pill Chips Selection
-            $(document).on('click', '#mlsapi-style-pills .mlsapi-pill', function() {
-                var $pill = $(this);
-                $('#mlsapi-style-pills .mlsapi-pill').removeClass('active');
-                $pill.addClass('active');
-                $('#mlsapi-param-style').val($pill.data('style'));
-            });
-
-            // Twilight Pill Chips Selection
-            $(document).on('click', '#mlsapi-twilight-pills .mlsapi-pill', function() {
-                var $pill = $(this);
-                $('#mlsapi-twilight-pills .mlsapi-pill').removeClass('active');
-                $pill.addClass('active');
-                $('#mlsapi-param-twilight-mode').val($pill.data('twilight'));
-            });
-
-            // Flooring Pill Chips Selection
-            $(document).on('click', '#mlsapi-flooring-pills .mlsapi-pill', function() {
-                var $pill = $(this);
-                $('#mlsapi-flooring-pills .mlsapi-pill').removeClass('active');
-                $pill.addClass('active');
-                $('#mlsapi-param-flooring').val($pill.data('flooring'));
-            });
-
-            // Watermark toggle
-            this.$watermarkCheckbox.on('change', function() {
-                if ($(this).is(':checked')) {
-                    self.$watermarkBadge.show();
-                } else {
-                    self.$watermarkBadge.hide();
-                }
+            // Format Segmented Buttons
+            $(document).on('click', '.mlsapi-seg-btn', function() {
+                $('.mlsapi-seg-btn').removeClass('active');
+                $(this).addClass('active');
+                $('#mlsapi-output-format').val($(this).data('format'));
             });
 
             // Media pickers
             this.$selectMediaBtn.on('click', function() { self.openWordPressMediaPicker(); });
             this.$browseFileBtn.on('click', function() { self.$fileInput.trigger('click'); });
             this.$fileInput.on('change', function(e) { self.handleLocalFileUpload(e); });
-            this.$ribbonAddBtn.on('click', function() { self.openWordPressMediaPicker(); });
-
-            // Ribbon item click
-            $(document).on('click', '.mlsapi-ribbon-thumb', function() {
-                var $thumb = $(this);
-                $('.mlsapi-ribbon-thumb').removeClass('active');
-                $thumb.addClass('active');
-                self.setImage($thumb.data('full-url'), $thumb.data('id'));
-            });
 
             // Clipboard paste
             $(document).on('paste', function(e) {
@@ -187,13 +92,21 @@
             this.$saveBtn.on('click', function() { self.saveResult(false); });
             this.$replaceBtn.on('click', function() { self.saveResult(true); });
             this.$downloadBtn.on('click', function() { self.downloadResult(); });
+
+            // Wall colors output mode switch
+            $(document).on('change', '#mlsapi-param-wall-mode', function() {
+                if ($(this).val() === 'grid') {
+                    $('#mlsapi-group-wall').hide();
+                } else {
+                    $('#mlsapi-group-wall').show();
+                }
+            });
         },
 
         open: function() {
             this.state.isOpen = true;
             this.$backdrop.fadeIn(150);
             $('body').addClass('mlsapi-modal-open');
-            this.loadRibbonPhotos();
         },
 
         close: function() {
@@ -207,46 +120,26 @@
             this.setImage(imageUrl, attachmentId);
         },
 
-        loadRibbonPhotos: function() {
-            var self = this;
-            if (this.state.ribbonLoaded) return;
-
-            $.ajax({
-                url: mlsapi_vars.ajax_url,
-                type: 'GET',
-                dataType: 'json',
-                data: {
-                    action: 'mlsapi_get_recent_media',
-                    nonce: mlsapi_vars.nonce
-                }
-            }).done(function(res) {
-                if (res && res.success && res.data && res.data.images) {
-                    self.state.ribbonLoaded = true;
-                    self.$ribbonScroll.empty();
-
-                    if (!res.data.images.length) {
-                        self.$ribbonScroll.html('<div style="font-size:12px;color:#94a3b8;padding:10px;">No images in media library yet.</div>');
-                        return;
-                    }
-
-                    res.data.images.forEach(function(img) {
-                        var isActive = (self.state.sourceAttachmentId && self.state.sourceAttachmentId === img.id) ? ' active' : '';
-                        var $thumb = $('<div class="mlsapi-ribbon-thumb' + isActive + '" data-id="' + img.id + '" data-full-url="' + img.full_url + '" title="' + (img.title || '') + '">' +
-                            '<img src="' + img.thumb_url + '" alt="Photo" />' +
-                        '</div>');
-                        self.$ribbonScroll.append($thumb);
-                    });
-                }
-            });
-        },
-
         setImage: function(url, attachmentId) {
+            var self = this;
             this.state.originalImageUrl = url;
             this.state.sourceAttachmentId = attachmentId || null;
             this.state.generatedImageUrl = null;
 
-            this.$imgBefore.attr('src', url);
-            this.$imgAfter.attr('src', url);
+            // Extract filename from URL
+            var filename = 'photo.jpg';
+            if (url) {
+                var cleanUrl = url.split('?')[0];
+                filename = cleanUrl.substring(cleanUrl.lastIndexOf('/') + 1) || 'photo.jpg';
+            }
+            this.$metaFilename.text(filename);
+
+            // Read natural image dimensions
+            var tempImg = new Image();
+            tempImg.onload = function() {
+                self.$metaDimensions.text(this.naturalWidth + '×' + this.naturalHeight);
+            };
+            tempImg.src = url;
 
             this.$dropzoneState.hide();
             this.$canvasState.show();
@@ -254,17 +147,15 @@
 
             if (this.state.sourceAttachmentId) {
                 this.$replaceBtn.show();
-                $('.mlsapi-ribbon-thumb').removeClass('active');
-                $('.mlsapi-ribbon-thumb[data-id="' + this.state.sourceAttachmentId + '"]').addClass('active');
             } else {
                 this.$replaceBtn.hide();
             }
 
-            this.$outputActions.hide();
-            this.$watermarkBadge.hide();
+            // Set initial progress
+            this.updateProgressBar(0, 'ready');
 
             if (window.MLSAPICompareSlider) {
-                window.MLSAPICompareSlider.showBeforeOnly();
+                window.MLSAPICompareSlider.showSingleImage(url, 'Before');
             }
         },
 
@@ -275,47 +166,110 @@
 
             this.$imgBefore.attr('src', '');
             this.$imgAfter.attr('src', '');
+            this.$metaFilename.text('');
+            this.$metaDimensions.text('');
 
             this.$canvasState.hide();
             this.$dropzoneState.show();
-            this.$outputActions.hide();
             this.$generateBtn.prop('disabled', true);
-            $('.mlsapi-ribbon-thumb').removeClass('active');
+            $('#mlsapi-swatches-strip').hide();
+            $('#mlsapi-swatches-list').empty();
+        },
+
+        getOperationInfo: function(tool) {
+            var ops = {
+                'stage': {
+                    title: 'Virtually Staging Room...',
+                    desc: 'Furnishing space with AI architectural staging on mlsapi.dev'
+                },
+                'furnish': {
+                    title: 'Furnishing Vacant Room...',
+                    desc: 'Synthesizing furniture according to chosen style on mlsapi.dev'
+                },
+                'twilight': {
+                    title: 'Converting to Dusk / Twilight...',
+                    desc: 'Transforming daytime photo into dusk twilight on mlsapi.dev'
+                },
+                'declutter': {
+                    title: 'Decluttering Room...',
+                    desc: 'Erasing personal items, boxes, and clutter on mlsapi.dev'
+                },
+                'empty': {
+                    title: 'Emptying Room...',
+                    desc: 'Removing furniture and restoring clean architectural space on mlsapi.dev'
+                },
+                'restyle': {
+                    title: 'Restyling Interior...',
+                    desc: 'Re-imagining interior decor with selected design style on mlsapi.dev'
+                },
+                'replace-furniture': {
+                    title: 'Replacing Furniture...',
+                    desc: 'Swapping furnishings with selected style on mlsapi.dev'
+                },
+                'wall-colors': {
+                    title: 'Applying Wall Paint Colors...',
+                    desc: 'Synthesizing designer wall paint variations on mlsapi.dev'
+                },
+                'replace-material': {
+                    title: 'Replacing Surface Materials...',
+                    desc: 'Rendering realistic architectural textures and materials on mlsapi.dev'
+                },
+                'floorplan-3d': {
+                    title: 'Rendering 3D Floorplan...',
+                    desc: 'Synthesizing 3D dollhouse model from blueprint on mlsapi.dev'
+                },
+                'creatives': {
+                    title: 'Generating Ad Creatives...',
+                    desc: 'Designing professional social marketing creatives on mlsapi.dev'
+                },
+                'enhance-exterior': {
+                    title: 'Enhancing Photo...',
+                    desc: 'Polishing curb appeal, skies, landscaping, and pools on mlsapi.dev'
+                }
+            };
+            return ops[tool] || {
+                title: 'Generating asset...',
+                desc: 'Processing AI operation on mlsapi.dev'
+            };
         },
 
         switchTool: function(tool) {
             this.state.activeTool = tool;
 
-            this.$toolBtns.removeClass('active');
-            $('.mlsapi-tool-btn[data-tool="' + tool + '"]').addClass('active');
+            $('.mlsapi-tool-item').removeClass('active');
+            $('.mlsapi-tool-item[data-tool="' + tool + '"]').addClass('active');
 
-            var meta = this.toolMeta[tool] || { title: tool, desc: '', btnText: tool, showWatermark: false };
-            this.$toolTitle.text(meta.title);
-            this.$toolDesc.text(meta.desc);
-            this.$generateBtnText.text(meta.btnText);
+            // Hide all parameter groups
+            $('.mlsapi-param-group').hide();
+            $('#mlsapi-swatches-strip').hide();
 
-            // Watermark notice visibility
-            if (meta.showWatermark) {
-                this.$watermarkNotice.show();
-                if (this.$watermarkCheckbox.is(':checked') && this.state.generatedImageUrl) {
-                    this.$watermarkBadge.show();
+            // Display options tailored to active operation
+            if (tool === 'stage' || tool === 'furnish') {
+                $('#mlsapi-group-style').show();
+                $('#mlsapi-group-room').show();
+            } else if (tool === 'restyle') {
+                $('#mlsapi-group-style').show();
+                $('#mlsapi-group-room').show();
+            } else if (tool === 'replace-furniture') {
+                $('#mlsapi-group-style').show();
+                $('#mlsapi-group-furniture-scope').show();
+            } else if (tool === 'declutter' || tool === 'empty') {
+                $('#mlsapi-group-room').show();
+            } else if (tool === 'twilight') {
+                $('#mlsapi-group-twilight').show();
+            } else if (tool === 'replace-material') {
+                $('#mlsapi-group-surface').show();
+                $('#mlsapi-group-material').show();
+            } else if (tool === 'wall-colors') {
+                $('#mlsapi-group-wall-mode').show();
+                if ($('#mlsapi-param-wall-mode').val() !== 'grid') {
+                    $('#mlsapi-group-wall').show();
                 }
-            } else {
-                this.$watermarkNotice.hide();
-                this.$watermarkBadge.hide();
+            } else if (tool === 'enhance-exterior') {
+                $('#mlsapi-group-exterior').show();
+            } else if (tool === 'floorplan-3d') {
+                $('#mlsapi-group-style').show();
             }
-
-            // Show/hide matching parameter field groups
-            $('.mlsapi-field-group').each(function() {
-                var toolsAttr = $(this).data('tools');
-                if (!toolsAttr) return;
-                var toolsList = toolsAttr.split(',');
-                if (toolsList.indexOf(tool) !== -1) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
         },
 
         openWordPressMediaPicker: function() {
@@ -331,8 +285,6 @@
                 frame.on('select', function() {
                     var attachment = frame.state().get('selection').first().toJSON();
                     self.setImage(attachment.url, attachment.id);
-                    self.state.ribbonLoaded = false;
-                    self.loadRibbonPhotos();
                 });
 
                 frame.open();
@@ -371,38 +323,38 @@
 
         collectParams: function() {
             var params = {
-                photo_url: this.state.originalImageUrl
+                photo_url: this.state.originalImageUrl,
+                format: $('#mlsapi-output-format').val() || 'webp'
             };
 
             var tool = this.state.activeTool;
 
-            if (tool === 'stage' || tool === 'restyle') {
+            if (tool === 'stage' || tool === 'furnish' || tool === 'restyle') {
                 params.style = $('#mlsapi-param-style').val();
                 params.room_type = $('#mlsapi-param-room').val();
+            } else if (tool === 'replace-furniture') {
+                params.style = $('#mlsapi-param-style').val();
+                params.furniture_scope = $('#mlsapi-param-furniture-scope').val();
             } else if (tool === 'twilight') {
                 params.mode = $('#mlsapi-param-twilight-mode').val();
-            } else if (tool === 'declutter') {
+            } else if (tool === 'declutter' || tool === 'empty') {
                 params.room_type = $('#mlsapi-param-room').val();
-            } else if (tool === 'empty') {
-                params.room_type = $('#mlsapi-param-room').val();
-                params.restore_flooring = $('#mlsapi-param-flooring').val();
+            } else if (tool === 'replace-material') {
+                params.surface = $('#mlsapi-param-surface').val();
+                params.material = $('#mlsapi-param-material').val();
+            } else if (tool === 'wall-colors') {
+                var wallMode = $('#mlsapi-param-wall-mode').val();
+                var colorName = $('#mlsapi-param-wall-color').val();
+                params.mode = wallMode;
+                params.color = colorName;
+                if (wallMode === 'single') {
+                    params.custom_colors = [{ name: colorName, hex: '' }];
+                }
             } else if (tool === 'enhance-exterior') {
-                params.enhance_lawn = $('#mlsapi-curb-lawn').is(':checked');
-                params.replace_sky = $('#mlsapi-curb-sky').is(':checked');
-                params.clean_pool = $('#mlsapi-curb-pool').is(':checked');
+                params.preset = $('#mlsapi-param-exterior').val();
             } else if (tool === 'floorplan-3d') {
                 params.floorplan_image_url = params.photo_url;
                 params.style = $('#mlsapi-param-style').val();
-            }
-
-            var notes = $('#mlsapi-param-notes').val();
-            if (notes && notes.trim()) {
-                params.custom_instructions = notes.trim();
-            }
-
-            if ($('#mlsapi-include-watermark').is(':checked')) {
-                params.include_watermark = true;
-                params.watermark_text = 'Virtually Staged';
             }
 
             return params;
@@ -425,8 +377,15 @@
             var tool = this.state.activeTool;
             var params = this.collectParams();
 
+            // Set endpoint-specific loading message
+            var opInfo = this.getOperationInfo(tool);
+            $('#mlsapi-step-title').text(opInfo.title);
+            $('#mlsapi-step-desc').text(opInfo.desc);
+
             this.state.isProcessing = true;
-            this.showProcessing('Initializing AI pipeline on mlsapi.dev...', 10);
+            this.$generateBtn.prop('disabled', true);
+            this.updateProgressBar(15, 'initializing');
+            this.showOverlay();
 
             window.MLSAPIStudioClient.dispatchJob(tool, params, this.state.sourceAttachmentId)
                 .done(function(jobData) {
@@ -434,8 +393,14 @@
                     self.pollJobProgress(jobData.job_id);
                 })
                 .fail(function(err) {
-                    self.hideProcessing();
-                    alert('Error: ' + err);
+                    self.hideOverlay();
+                    self.state.isProcessing = false;
+                    self.$generateBtn.prop('disabled', false);
+                    var msg = err;
+                    if (err && (typeof err === 'string') && (err.indexOf('API key') !== -1 || err.indexOf('UNAUTHORIZED') !== -1 || err.indexOf('401') !== -1 || err.indexOf('masked') !== -1)) {
+                        msg = 'Authentication Error: ' + err + '\n\nPlease open MLS Studio → Settings & Billing and verify your API key. Make sure to click Reveal in mlsapi.dev and copy the full unmasked secret key (starts with sk_live_ or sk_test_).';
+                    }
+                    alert(msg);
                 });
         },
 
@@ -443,20 +408,64 @@
             var self = this;
 
             window.MLSAPIStudioClient.pollJobUntilComplete(jobId, function(progressData) {
-                var pct = progressData.progress || 25;
-                var step = progressData.step || 'Rendering real estate visual...';
-                self.updateProcessing(step, pct);
+                var pct = progressData.progress || 35;
+                var step = progressData.step || 'processing';
+                self.updateProgressBar(pct, step);
+
+                // Dynamically update overlay step description
+                if (progressData.step) {
+                    var humanStep = progressData.step.replace(/_/g, ' ');
+                    $('#mlsapi-step-desc').text(humanStep.charAt(0).toUpperCase() + humanStep.slice(1) + ' on mlsapi.dev');
+                }
             }).done(function(result) {
-                self.hideProcessing();
+                self.hideOverlay();
+                self.state.isProcessing = false;
+                self.$generateBtn.prop('disabled', false);
+                self.updateProgressBar(100, 'completed');
                 self.displayResult(result);
             }).fail(function(err) {
-                self.hideProcessing();
+                self.hideOverlay();
+                self.state.isProcessing = false;
+                self.$generateBtn.prop('disabled', false);
+                self.updateProgressBar(100, 'failed');
                 alert('Job Failed: ' + err);
             });
         },
 
         displayResult: function(result) {
-            var outUrl = result.staged_photo_url ||
+            var outUrl = null;
+            var tool = this.state.activeTool;
+
+            if (tool === 'wall-colors') {
+                var wallMode = $('#mlsapi-param-wall-mode').val() || 'single';
+                var chosenColor = $('#mlsapi-param-wall-color').val();
+
+                if (wallMode === 'grid' && result.comparison_grid_3x3_url) {
+                    outUrl = result.comparison_grid_3x3_url;
+                    $('#mlsapi-swatches-strip').hide();
+                } else if (result.swatch_results && result.swatch_results.length > 0) {
+                    // Match selected single color swatch
+                    var match = null;
+                    if (chosenColor) {
+                        for (var i = 0; i < result.swatch_results.length; i++) {
+                            if (result.swatch_results[i].color_name && 
+                                result.swatch_results[i].color_name.toLowerCase().indexOf(chosenColor.toLowerCase()) !== -1) {
+                                match = result.swatch_results[i];
+                                break;
+                            }
+                        }
+                    }
+                    var selectedSwatch = match || result.swatch_results[0];
+                    outUrl = selectedSwatch.image_url;
+
+                    // Render interactive swatches switcher strip
+                    this.renderSwatchBar(result.swatch_results, outUrl);
+                } else {
+                    outUrl = result.comparison_grid_3x3_url || result.image_url;
+                }
+            } else {
+                $('#mlsapi-swatches-strip').hide();
+                outUrl = result.staged_photo_url ||
                          result.enhanced_photo_url ||
                          result.decluttered_photo_url ||
                          result.empty_photo_url ||
@@ -464,7 +473,9 @@
                          result.updated_room_photo_url ||
                          result.render_3d_url ||
                          result.upscaled_image_url ||
+                         result.comparison_grid_3x3_url ||
                          result.image_url;
+            }
 
             if (!outUrl) {
                 alert('AI job succeeded, but no output image URL was returned.');
@@ -472,21 +483,42 @@
             }
 
             this.state.generatedImageUrl = outUrl;
-            this.$imgAfter.attr('src', outUrl);
 
-            // Watermark badge check
-            if (this.toolMeta[this.state.activeTool]?.showWatermark && this.$watermarkCheckbox.is(':checked')) {
-                this.$watermarkBadge.show();
-            } else {
-                this.$watermarkBadge.hide();
-            }
-
-            // Reveal save output panel
-            this.$outputActions.fadeIn(200);
-
+            var toolTitle = $('.mlsapi-tool-item.active').data('title') || 'After';
             if (window.MLSAPICompareSlider) {
-                window.MLSAPICompareSlider.reset();
+                window.MLSAPICompareSlider.enableComparison(this.state.originalImageUrl, outUrl, toolTitle);
             }
+        },
+
+        renderSwatchBar: function(swatches, currentUrl) {
+            var self = this;
+            var $strip = $('#mlsapi-swatches-strip');
+            var $list = $('#mlsapi-swatches-list');
+            $list.empty();
+
+            swatches.forEach(function(s) {
+                if (!s.image_url) return;
+                var isActive = (s.image_url === currentUrl);
+                var $chip = $('<button type="button" class="mlsapi-swatch-chip' + (isActive ? ' active' : '') + '"></button>');
+                if (s.hex) {
+                    $chip.append('<span class="mlsapi-swatch-dot" style="background-color: ' + s.hex + ';"></span>');
+                }
+                $chip.append('<span>' + (s.color_name || 'Swatch') + '</span>');
+
+                $chip.on('click', function() {
+                    $('.mlsapi-swatch-chip').removeClass('active');
+                    $(this).addClass('active');
+                    self.state.generatedImageUrl = s.image_url;
+                    var toolTitle = s.color_name || 'Paint Swatch';
+                    if (window.MLSAPICompareSlider) {
+                        window.MLSAPICompareSlider.enableComparison(self.state.originalImageUrl, s.image_url, toolTitle);
+                    }
+                });
+
+                $list.append($chip);
+            });
+
+            $strip.show();
         },
 
         saveResult: function(replaceOriginal) {
@@ -495,7 +527,7 @@
 
             var $btn = replaceOriginal ? this.$replaceBtn : this.$saveBtn;
             var originalText = $btn.text();
-            $btn.prop('disabled', true).text(replaceOriginal ? mlsapi_vars.strings.replacing : mlsapi_vars.strings.saving);
+            $btn.prop('disabled', true).text(replaceOriginal ? 'Replacing...' : 'Saving...');
 
             window.MLSAPIStudioClient.saveImage({
                 imageUrl: this.state.generatedImageUrl,
@@ -504,10 +536,8 @@
                 jobId: this.state.currentJobId,
                 operation: this.state.activeTool
             }).done(function(res) {
-                alert(res.message || (replaceOriginal ? mlsapi_vars.strings.success_replaced : mlsapi_vars.strings.success_saved));
+                alert(res.message || 'Image saved successfully!');
                 $btn.prop('disabled', false).text(originalText);
-                self.state.ribbonLoaded = false;
-                self.loadRibbonPhotos();
             }).fail(function(err) {
                 alert('Error saving image: ' + err);
                 $btn.prop('disabled', false).text(originalText);
@@ -525,27 +555,31 @@
             document.body.removeChild(a);
         },
 
-        showProcessing: function(stepText, percent) {
-            this.$stepTitle.text(mlsapi_vars.strings.processing);
-            this.$stepDesc.text(stepText || '');
-            this.updateProgressBar(percent || 15);
-            this.$overlay.fadeIn(150);
-        },
-
-        updateProcessing: function(stepText, percent) {
-            this.$stepDesc.text(stepText);
-            this.updateProgressBar(percent);
-        },
-
-        updateProgressBar: function(percent) {
-            var pct = Math.max(5, Math.min(100, Math.round(percent)));
-            this.$progressBar.css('width', pct + '%');
+        updateProgressBar: function(percent, stepText) {
+            var pct = Math.max(0, Math.min(100, Math.round(percent)));
+            this.$progressFill.css('width', pct + '%');
             this.$progressPercent.text(pct + '%');
+            if (this.$overlayProgressFill && this.$overlayProgressFill.length) {
+                this.$overlayProgressFill.css('width', pct + '%');
+            }
+            if (this.$overlayProgressPercent && this.$overlayProgressPercent.length) {
+                this.$overlayProgressPercent.text(pct + '%');
+            }
+            if (stepText) {
+                var cleanStep = stepText.replace(/_/g, ' ');
+                this.$stepLabel.text(cleanStep);
+                if (this.$overlayStepLabel && this.$overlayStepLabel.length) {
+                    this.$overlayStepLabel.text(cleanStep.charAt(0).toUpperCase() + cleanStep.slice(1));
+                }
+            }
         },
 
-        hideProcessing: function() {
-            this.state.isProcessing = false;
-            this.$overlay.fadeOut(150);
+        showOverlay: function() {
+            this.$overlay.addClass('active').show();
+        },
+
+        hideOverlay: function() {
+            this.$overlay.removeClass('active').hide();
         }
     };
 

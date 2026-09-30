@@ -38,7 +38,11 @@ class MLSAPI_Ajax {
             wp_send_json_error( array( 'message' => __( 'Permission denied.', 'mlsapi-studio' ) ), 403 );
         }
 
-        $res = $this->api_client->test_connection();
+        $custom_key = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : null;
+        $custom_url = isset( $_POST['base_url'] ) ? esc_url_raw( wp_unslash( $_POST['base_url'] ) ) : null;
+        $custom_env = isset( $_POST['env'] ) ? sanitize_text_field( wp_unslash( $_POST['env'] ) ) : null;
+
+        $res = $this->api_client->test_connection( $custom_key, $custom_url, $custom_env );
 
         if ( is_wp_error( $res ) ) {
             wp_send_json_error( array( 'message' => $res->get_error_message() ) );
@@ -60,17 +64,19 @@ class MLSAPI_Ajax {
             wp_send_json_error( array( 'message' => __( 'Permission denied.', 'mlsapi-studio' ) ), 403 );
         }
 
-        $operation = isset( $_POST['operation'] ) ? sanitize_text_field( wp_unslash( $_POST['operation'] ) ) : '';
-        $raw_params = isset( $_POST['params'] ) ? wp_unslash( $_POST['params'] ) : '';
-        $params = is_string( $raw_params ) ? json_decode( $raw_params, true ) : $raw_params;
+        $operation      = isset( $_POST['operation'] ) ? sanitize_text_field( wp_unslash( $_POST['operation'] ) ) : '';
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw JSON payload decoded and deeply sanitized below.
+        $raw_params     = isset( $_POST['params'] ) ? wp_unslash( $_POST['params'] ) : '';
+        $decoded_params = is_string( $raw_params ) ? json_decode( $raw_params, true ) : $raw_params;
+        $params         = is_array( $decoded_params ) ? map_deep( $decoded_params, 'sanitize_text_field' ) : array();
 
-        if ( empty( $operation ) || ! is_array( $params ) ) {
+        if ( empty( $operation ) || empty( $params ) ) {
             wp_send_json_error( array( 'message' => __( 'Invalid operation or request parameters.', 'mlsapi-studio' ) ) );
         }
 
         // If source attachment ID is provided but photo_url is missing, resolve the attachment URL
         if ( empty( $params['photo_url'] ) && ! empty( $_POST['source_attachment_id'] ) ) {
-            $att_id = intval( $_POST['source_attachment_id'] );
+            $att_id  = absint( wp_unslash( $_POST['source_attachment_id'] ) );
             $att_url = wp_get_attachment_url( $att_id );
             if ( $att_url ) {
                 $params['photo_url'] = $att_url;
@@ -146,16 +152,25 @@ class MLSAPI_Ajax {
             }
         }
 
+        // Ensure filesystem permissions constants exist
+        if ( ! defined( 'FS_CHMOD_FILE' ) ) {
+            define( 'FS_CHMOD_FILE', ( file_exists( ABSPATH . 'index.php' ) ? ( fileperms( ABSPATH . 'index.php' ) & 0777 | 0644 ) : 0644 ) );
+        }
+        if ( ! defined( 'FS_CHMOD_DIR' ) ) {
+            define( 'FS_CHMOD_DIR', ( file_exists( ABSPATH ) ? ( fileperms( ABSPATH ) & 0777 | 0755 ) : 0755 ) );
+        }
+
         // Initialize WordPress Filesystem
+        require_once ABSPATH . 'wp-admin/includes/file.php';
         global $wp_filesystem;
         if ( empty( $wp_filesystem ) ) {
-            require_once ABSPATH . 'wp-admin/includes/file.php';
             WP_Filesystem();
         }
 
         $upload_dir = wp_upload_dir();
         require_once ABSPATH . 'wp-admin/includes/image.php';
 
+        $file_mode = defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644;
         $job_id    = isset( $_POST['job_id'] ) ? sanitize_text_field( wp_unslash( $_POST['job_id'] ) ) : '';
         $operation = isset( $_POST['operation'] ) ? sanitize_text_field( wp_unslash( $_POST['operation'] ) ) : '';
 
@@ -173,7 +188,18 @@ class MLSAPI_Ajax {
             }
 
             // Write over the existing file
-            if ( ! $wp_filesystem->put_contents( $existing_file, $image_binary, FS_CHMOD_FILE ) ) {
+            $saved = false;
+            if ( ! empty( $wp_filesystem ) && method_exists( $wp_filesystem, 'put_contents' ) ) {
+                $saved = $wp_filesystem->put_contents( $existing_file, $image_binary, $file_mode );
+            }
+            if ( ! $saved ) {
+                $saved = ( false !== @file_put_contents( $existing_file, $image_binary ) );
+                if ( $saved && function_exists( 'chmod' ) ) {
+                    @chmod( $existing_file, $file_mode );
+                }
+            }
+
+            if ( ! $saved ) {
                 wp_send_json_error( array( 'message' => __( 'Failed to overwrite existing attachment.', 'mlsapi-studio' ) ) );
             }
 
@@ -222,7 +248,18 @@ class MLSAPI_Ajax {
             $filename = wp_unique_filename( $upload_dir['path'], $sanitized_base . '.' . $file_ext );
             $file_path = $upload_dir['path'] . '/' . $filename;
 
-            if ( ! $wp_filesystem->put_contents( $file_path, $image_binary, FS_CHMOD_FILE ) ) {
+            $saved = false;
+            if ( ! empty( $wp_filesystem ) && method_exists( $wp_filesystem, 'put_contents' ) ) {
+                $saved = $wp_filesystem->put_contents( $file_path, $image_binary, $file_mode );
+            }
+            if ( ! $saved ) {
+                $saved = ( false !== @file_put_contents( $file_path, $image_binary ) );
+                if ( $saved && function_exists( 'chmod' ) ) {
+                    @chmod( $file_path, $file_mode );
+                }
+            }
+
+            if ( ! $saved ) {
                 wp_send_json_error( array( 'message' => __( 'Failed to save image to uploads directory.', 'mlsapi-studio' ) ) );
             }
 

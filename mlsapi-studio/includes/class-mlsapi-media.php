@@ -37,7 +37,9 @@ class MLSAPI_Media {
             jQuery(document).ready(function($) {
                 var $addNewBtn = $('.page-title-action:first');
                 if ($addNewBtn.length && !$('#mlsapi-media-launch-btn').length) {
-                    var $mlsBtn = $('<a href="#" id="mlsapi-media-launch-btn" class="page-title-action" style="margin-left: 8px; background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px;"><span class="dashicons dashicons-art" style="font-size:16px; width:16px; height:16px; line-height:1;"></span> ' + <?php echo wp_json_encode( __( 'MLS Studio AI', 'mlsapi-studio' ) ); ?> + '</a>');
+                    var $mlsBtn = $('<a href="#" id="mlsapi-media-launch-btn" class="page-title-action" style="margin-left: 8px; background: #ff6b35; color: #0a0d12; border: none; font-weight: 600; border-radius: 6px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s ease;"><span style="font-size: 13px;">✦</span> ' + <?php echo wp_json_encode( __( 'MLS Studio AI', 'mlsapi-studio' ) ); ?> + '</a>');
+                    $mlsBtn.on('mouseenter', function() { $(this).css('background', '#f95716'); });
+                    $mlsBtn.on('mouseleave', function() { $(this).css('background', '#ff6b35'); });
                     $mlsBtn.on('click', function(e) {
                         e.preventDefault();
                         if (window.MLSAPIModal) {

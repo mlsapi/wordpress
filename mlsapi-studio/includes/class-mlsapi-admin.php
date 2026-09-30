@@ -40,8 +40,9 @@ class MLSAPI_Admin {
             'media-upload-popup',
         );
 
-        // Also check if Elementor editor is active
-        $is_elementor = did_action( 'elementor/loaded' ) && isset( $_GET['action'] ) && 'elementor' === $_GET['action'];
+        // Also check if Elementor editor is active.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only action parameter check for Elementor screen.
+        $is_elementor = did_action( 'elementor/loaded' ) && isset( $_GET['action'] ) && 'elementor' === sanitize_key( wp_unslash( $_GET['action'] ) );
 
         if ( ! in_array( $hook, $relevant_hooks, true ) && ! $is_elementor && 'post' !== get_post_type() ) {
             // Still allow on any attachment post type

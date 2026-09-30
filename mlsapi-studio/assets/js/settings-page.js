@@ -22,9 +22,33 @@
             }
         });
 
+        // Environment Segmented Buttons
+        $('.mlsapi-env-btn').on('click', function(e) {
+            e.preventDefault();
+            var env = $(this).data('env');
+            $('.mlsapi-env-btn').removeClass('active');
+            $(this).addClass('active');
+            $('#mlsapi_key_env').val(env);
+        });
+
         // Test API Connection
         $testBtn.on('click', function(e) {
             e.preventDefault();
+
+            var currentKey = ($keyInput.val() || '').trim();
+            var currentBaseUrl = ($('#mlsapi_api_base_url').val() || '').trim();
+            var currentEnv = $('#mlsapi_key_env').val() || 'live';
+
+            if (!currentKey) {
+                $status.removeClass('success').addClass('error').text('✕ Please enter an API key to test.').show();
+                return;
+            }
+
+            if (currentKey.indexOf('•') !== -1 || currentKey.indexOf('***') !== -1) {
+                $status.removeClass('success').addClass('error').text('✕ API key contains mask bullets (••••). In mlsapi.dev, click Reveal before copying.').show();
+                return;
+            }
+
             $status.removeClass('success error').text('Testing connection...').show();
             $testBtn.prop('disabled', true);
 
@@ -34,7 +58,10 @@
                 dataType: 'json',
                 data: {
                     action: 'mlsapi_test_connection',
-                    nonce: mlsapi_settings_vars.nonce
+                    nonce: mlsapi_settings_vars.nonce,
+                    api_key: currentKey,
+                    base_url: currentBaseUrl,
+                    env: currentEnv
                 }
             }).done(function(response) {
                 $testBtn.prop('disabled', false);

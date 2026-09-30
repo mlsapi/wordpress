@@ -1,8 +1,8 @@
 === MLS API Studio – AI Real Estate Image Staging & Enhancement ===
 Contributors: mlsapidev
-Tags: real estate, virtual staging, twilight, declutter, floor plan, photo enhance
+Tags: real estate, virtual staging, twilight, declutter, photo enhance
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later

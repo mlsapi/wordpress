@@ -67,7 +67,7 @@ class MLSAPI_Settings {
     public function register_settings() {
         register_setting( 'mlsapi_settings_group', 'mlsapi_api_key', array(
             'type'              => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
+            'sanitize_callback' => array( $this, 'sanitize_api_key' ),
             'default'           => '',
         ) );
 
@@ -79,7 +79,7 @@ class MLSAPI_Settings {
 
         register_setting( 'mlsapi_settings_group', 'mlsapi_api_base_url', array(
             'type'              => 'string',
-            'sanitize_callback' => 'esc_url_raw',
+            'sanitize_callback' => array( $this, 'sanitize_base_url' ),
             'default'           => MLSAPI_DEFAULT_API_URL,
         ) );
 
@@ -100,6 +100,53 @@ class MLSAPI_Settings {
             'sanitize_callback' => 'rest_sanitize_boolean',
             'default'           => true,
         ) );
+    }
+
+    /**
+     * Sanitize API key and prevent masked bullet keys from corrupting existing secrets
+     *
+     * @param string $val
+     * @return string
+     */
+    public function sanitize_api_key( $val ) {
+        $val      = trim( sanitize_text_field( $val ) );
+        $existing = (string) get_option( 'mlsapi_api_key', '' );
+
+        // If the submitted value contains mask characters (bullets or asterisks)
+        if ( false !== strpos( $val, '•' ) || false !== strpos( $val, '***' ) ) {
+            if ( ! empty( $existing ) && false === strpos( $existing, '•' ) ) {
+                // Preserve the previously saved full secret key
+                return $existing;
+            }
+            add_settings_error(
+                'mlsapi_api_key',
+                'mlsapi_masked_key_error',
+                __( 'The API key you entered contains mask characters (••••). Please copy your full unmasked secret key from your mlsapi.dev dashboard.', 'mlsapi-studio' ),
+                'error'
+            );
+            return '';
+        }
+
+        // When key is changed, reset connection status so it gets freshly verified
+        if ( $val !== $existing ) {
+            delete_option( 'mlsapi_connection_status' );
+        }
+
+        return $val;
+    }
+
+    /**
+     * Sanitize and normalize API Base URL
+     *
+     * @param string $val
+     * @return string
+     */
+    public function sanitize_base_url( $val ) {
+        $url = esc_url_raw( trim( (string) $val ) );
+        if ( empty( $url ) || 'https://api.mlsapi.dev' === untrailingslashit( $url ) || 'http://api.mlsapi.dev' === untrailingslashit( $url ) ) {
+            return MLSAPI_DEFAULT_API_URL;
+        }
+        return untrailingslashit( $url );
     }
 
     public function sanitize_env( $val ) {
@@ -143,34 +190,12 @@ class MLSAPI_Settings {
      * Render Studio Launcher landing page
      */
     public function render_studio_launcher_page() {
-        ?>
-        <div class="wrap mlsapi-launcher-wrap">
-            <h1><?php esc_html_e( 'MLS API Studio AI Workspace', 'mlsapi-studio' ); ?></h1>
-            <p class="description">
-                <?php esc_html_e( 'Generate AI virtual staging, dusk twilight conversions, decluttering, 3D floor plans, and photo enhancements directly in WordPress.', 'mlsapi-studio' ); ?>
-            </p>
+        if ( ! current_user_can( 'upload_files' ) ) {
+            return;
+        }
 
-            <div class="mlsapi-card mlsapi-hero-card">
-                <h2><?php esc_html_e( 'Launch Studio Editor', 'mlsapi-studio' ); ?></h2>
-                <p><?php esc_html_e( 'Open the full-screen visual editor to select any media library asset, paste from clipboard, or drag and drop a real estate photo.', 'mlsapi-studio' ); ?></p>
-                <button type="button" class="button button-primary button-hero" onclick="if(window.MLSAPIModal){window.MLSAPIModal.open();}">
-                    <span class="dashicons dashicons-art" style="margin-top:4px;"></span> <?php esc_html_e( 'Open Studio Editor', 'mlsapi-studio' ); ?>
-                </button>
-            </div>
-
-            <?php if ( ! $this->api_client->is_configured() ) : ?>
-                <div class="notice notice-warning inline" style="margin-top: 20px;">
-                    <p>
-                        <strong><?php esc_html_e( 'API Key Required:', 'mlsapi-studio' ); ?></strong>
-                        <?php esc_html_e( 'Please add your mlsapi.dev API key to enable generative AI features.', 'mlsapi-studio' ); ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=mlsapi-settings' ) ); ?>" class="button button-secondary button-small" style="margin-left: 10px;">
-                            <?php esc_html_e( 'Configure API Key', 'mlsapi-studio' ); ?>
-                        </a>
-                    </p>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
+        $api_client = $this->api_client;
+        include MLSAPI_PLUGIN_DIR . 'includes/templates/workspace-launcher.php';
     }
 
     /**
@@ -181,7 +206,8 @@ class MLSAPI_Settings {
             return;
         }
 
-        $active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'settings';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only UI tab navigation parameter.
+        $active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'settings';
         $api_client = $this->api_client;
 
         include MLSAPI_PLUGIN_DIR . 'includes/templates/settings-page.php';

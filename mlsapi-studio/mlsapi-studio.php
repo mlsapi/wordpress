@@ -3,7 +3,7 @@
  * Plugin Name: MLS API Studio – AI Real Estate Image Staging & Enhancement
  * Plugin URI:  https://mlsapi.dev
  * Description: AI-powered virtual staging, dusk/twilight conversion, decluttering, restyling, floor plan 3D renders, and photo enhancement for real estate listings.
- * Version:     1.0.0
+ * Version:     1.1.2
  * Author:      mlsapi.dev
  * Author URI:  https://mlsapi.dev
  * License:     GPL-2.0+
@@ -19,11 +19,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Plugin Constants
-define( 'MLSAPI_VERSION', '1.0.0' );
+define( 'MLSAPI_VERSION', '1.1.2' );
 define( 'MLSAPI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MLSAPI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'MLSAPI_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-define( 'MLSAPI_DEFAULT_API_URL', 'https://api.mlsapi.dev' );
+define( 'MLSAPI_DEFAULT_API_URL', 'https://mlsapi.dev' );
 
 // Load Core Includes
 require_once MLSAPI_PLUGIN_DIR . 'includes/class-mlsapi-api-client.php';
@@ -116,7 +116,6 @@ class MLSAPI_Studio_Plugin {
     private function init_hooks() {
         register_activation_hook( __FILE__, array( $this, 'on_activate' ) );
         register_deactivation_hook( __FILE__, array( $this, 'on_deactivate' ) );
-        add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
     }
 
     /**
@@ -139,13 +138,6 @@ class MLSAPI_Studio_Plugin {
      */
     public function on_deactivate() {
         delete_transient( 'mlsapi_billing_overview' );
-    }
-
-    /**
-     * Runs on plugins_loaded
-     */
-    public function on_plugins_loaded() {
-        load_plugin_textdomain( 'mlsapi-studio', false, dirname( MLSAPI_PLUGIN_BASENAME ) . '/languages' );
     }
 }
 

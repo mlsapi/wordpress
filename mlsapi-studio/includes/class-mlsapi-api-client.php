@@ -26,7 +26,10 @@ class MLSAPI_Api_Client {
      */
     public function get_base_url() {
         $url = trim( (string) get_option( 'mlsapi_api_base_url', MLSAPI_DEFAULT_API_URL ) );
-        return untrailingslashit( empty( $url ) ? MLSAPI_DEFAULT_API_URL : $url );
+        if ( empty( $url ) || 'https://api.mlsapi.dev' === untrailingslashit( $url ) || 'http://api.mlsapi.dev' === untrailingslashit( $url ) ) {
+            return MLSAPI_DEFAULT_API_URL;
+        }
+        return untrailingslashit( $url );
     }
 
     /**
@@ -45,7 +48,7 @@ class MLSAPI_Api_Client {
      */
     public function is_configured() {
         $key = $this->get_api_key();
-        return ! empty( $key );
+        return ! empty( $key ) && false === strpos( $key, '•' );
     }
 
     /**
@@ -76,15 +79,20 @@ class MLSAPI_Api_Client {
      */
     public function request( $method, $endpoint, $body = null, $timeout = 30 ) {
         if ( ! $this->is_configured() ) {
+            $raw_key = $this->get_api_key();
+            if ( ! empty( $raw_key ) && false !== strpos( $raw_key, '•' ) ) {
+                return new WP_Error( 'masked_key', __( 'The configured API key contains mask characters (••••). Please visit Settings & Billing and enter your full secret key.', 'mlsapi-studio' ) );
+            }
             return new WP_Error( 'not_configured', __( 'MLS API key is not configured. Please visit settings.', 'mlsapi-studio' ) );
         }
 
         $url = $this->get_base_url() . '/' . ltrim( $endpoint, '/' );
 
         $args = array(
-            'method'  => strtoupper( $method ),
-            'headers' => $this->get_headers(),
-            'timeout' => $timeout,
+            'method'             => strtoupper( $method ),
+            'headers'            => $this->get_headers(),
+            'timeout'            => $timeout,
+            'reject_unsafe_urls' => false,
         );
 
         if ( null !== $body && in_array( $args['method'], array( 'POST', 'PUT', 'PATCH' ), true ) ) {
@@ -110,12 +118,66 @@ class MLSAPI_Api_Client {
     }
 
     /**
-     * Test connection and validate API key
+     * Test connection and validate API key against live API
      *
+     * @param string|null $custom_key Optional API key to test.
+     * @param string|null $custom_url Optional base URL to test.
+     * @param string|null $custom_env Optional environment to test.
      * @return array|WP_Error
      */
-    public function test_connection() {
-        return $this->request( 'GET', '/api/billing/overview' );
+    public function test_connection( $custom_key = null, $custom_url = null, $custom_env = null ) {
+        $key = null !== $custom_key ? trim( (string) $custom_key ) : $this->get_api_key();
+        if ( empty( $key ) ) {
+            return new WP_Error( 'missing_key', __( 'No API key provided to test. Please enter your API key.', 'mlsapi-studio' ) );
+        }
+
+        if ( false !== strpos( $key, '•' ) || false !== strpos( $key, '***' ) ) {
+            return new WP_Error( 'masked_key', __( 'The API key appears to be masked (contains ••••). In the mlsapi.dev dashboard, click Reveal before copying, or generate a new key and copy the full plaintext secret.', 'mlsapi-studio' ) );
+        }
+
+        $base_url = null !== $custom_url && ! empty( $custom_url ) ? untrailingslashit( trim( (string) $custom_url ) ) : $this->get_base_url();
+        if ( 'https://api.mlsapi.dev' === $base_url || 'http://api.mlsapi.dev' === $base_url ) {
+            $base_url = MLSAPI_DEFAULT_API_URL;
+        }
+        $env = null !== $custom_env ? ( 'test' === $custom_env ? 'test' : 'live' ) : $this->get_env();
+
+        $headers = array(
+            'Authorization' => 'Bearer ' . $key,
+            'x-api-key'     => $key,
+            'x-key-env'     => $env,
+            'Content-Type'  => 'application/json',
+            'Accept'        => 'application/json',
+            'User-Agent'    => 'WordPress-MLSAPI-Studio/' . MLSAPI_VERSION . '; ' . home_url(),
+        );
+
+        $response = wp_remote_request( $base_url . '/jobs?limit=1', array(
+            'method'             => 'GET',
+            'headers'            => $headers,
+            'timeout'            => 15,
+            'reject_unsafe_urls' => false,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $code     = wp_remote_retrieve_response_code( $response );
+        $raw_body = wp_remote_retrieve_body( $response );
+        $data     = json_decode( $raw_body, true );
+
+        if ( 200 === $code ) {
+            update_option( 'mlsapi_connection_status', 'connected' );
+            update_option( 'mlsapi_connection_last_checked', gmdate( 'Y-m-d H:i:s' ) );
+            return array(
+                'status'  => 'ok',
+                'env'     => $env,
+                'message' => __( 'Connected successfully to mlsapi.dev!', 'mlsapi-studio' ),
+            );
+        }
+
+        update_option( 'mlsapi_connection_status', 'failed' );
+        $msg = isset( $data['error']['message'] ) ? $data['error']['message'] : ( isset( $data['error'] ) ? $data['error'] : 'HTTP Error ' . $code );
+        return new WP_Error( 'api_error_' . $code, $msg, array( 'status' => $code, 'data' => $data ) );
     }
 
     /**
@@ -127,7 +189,9 @@ class MLSAPI_Api_Client {
     public function get_billing_overview( $force_refresh = false ) {
         $cache_key = 'mlsapi_billing_overview_' . md5( $this->get_api_key() );
 
-        if ( ! $force_refresh ) {
+        if ( $force_refresh ) {
+            delete_transient( $cache_key );
+        } else {
             $cached = get_transient( $cache_key );
             if ( false !== $cached ) {
                 return $cached;
@@ -167,6 +231,7 @@ class MLSAPI_Api_Client {
         );
 
         if ( ! isset( $endpoint_map[ $operation ] ) ) {
+            /* translators: %s: operation name */
             return new WP_Error( 'invalid_operation', sprintf( __( 'Unknown operation "%s"', 'mlsapi-studio' ), esc_html( $operation ) ) );
         }
 
@@ -206,6 +271,7 @@ class MLSAPI_Api_Client {
 
         $code = wp_remote_retrieve_response_code( $response );
         if ( 200 !== $code ) {
+            /* translators: %d: HTTP response code */
             return new WP_Error( 'download_failed', sprintf( __( 'Remote image download failed with HTTP code %d', 'mlsapi-studio' ), $code ) );
         }
 

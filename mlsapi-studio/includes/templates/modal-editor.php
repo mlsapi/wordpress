@@ -1,7 +1,7 @@
 <?php
 /**
  * Studio Editor Modal Template
- * Matches the modern real estate UI with photo ribbon, tool strip, and pill style selectors.
+ * Matches the exact MLS API Studio dark branding and layout.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,91 +11,224 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div id="mlsapi-modal-backdrop" class="mlsapi-modal-backdrop" style="display: none;">
     <div id="mlsapi-modal" class="mlsapi-modal" role="dialog" aria-modal="true" aria-labelledby="mlsapi-modal-title">
         
-        <!-- Top Photo Carousel Ribbon -->
-        <div class="mlsapi-top-ribbon" id="mlsapi-top-ribbon">
-            <div class="mlsapi-ribbon-label">
-                <span class="dashicons dashicons-format-gallery"></span>
-                <span><?php esc_html_e( 'Listing Photos', 'mlsapi-studio' ); ?></span>
-            </div>
-            <div class="mlsapi-ribbon-scroll" id="mlsapi-ribbon-scroll">
-                <!-- Dynamically populated thumbnail items -->
-                <div class="mlsapi-ribbon-loading">
-                    <span class="mlsapi-mini-spinner"></span>
-                    <span><?php esc_html_e( 'Loading library photos...', 'mlsapi-studio' ); ?></span>
+        <!-- Header -->
+        <header class="mlsapi-modal-header">
+            <div class="mlsapi-header-left">
+                <div class="mlsapi-logo-badge">
+                    <span class="mlsapi-logo-icon">⌂</span>
                 </div>
+                <h1 class="mlsapi-modal-title" id="mlsapi-modal-title"><?php esc_html_e( 'MLS API Studio', 'mlsapi-studio' ); ?></h1>
             </div>
-            <button type="button" class="mlsapi-ribbon-upload-btn" id="mlsapi-ribbon-add-btn" title="<?php esc_attr_e( 'Add / Upload Photo', 'mlsapi-studio' ); ?>">
-                <span class="dashicons dashicons-plus-alt2"></span>
-            </button>
-            <button type="button" class="mlsapi-btn-icon mlsapi-modal-close-ribbon" id="mlsapi-modal-close" title="<?php esc_attr_e( 'Close', 'mlsapi-studio' ); ?>">
-                <span class="dashicons dashicons-no-alt"></span>
-            </button>
-        </div>
+            <div class="mlsapi-header-right">
+                <div class="mlsapi-file-meta" id="mlsapi-file-meta">
+                    <span id="mlsapi-meta-filename"><?php esc_html_e( 'living-room.jpg', 'mlsapi-studio' ); ?></span>
+                    <span class="mlsapi-meta-sep">·</span>
+                    <span id="mlsapi-meta-dimensions"><?php esc_html_e( '2048×1536', 'mlsapi-studio' ); ?></span>
+                </div>
+                <button type="button" class="mlsapi-modal-close" id="mlsapi-modal-close" title="<?php esc_attr_e( 'Close', 'mlsapi-studio' ); ?>">
+                    &times;
+                </button>
+            </div>
+        </header>
 
-        <!-- Main Body: Tool Strip + Workspace Canvas + Configuration Sidebar -->
+        <!-- Main Body: Left Sidebar + Center Workspace -->
         <div class="mlsapi-modal-body">
             
-            <!-- Left Tool Strip (Compact vertical icon + label) -->
-            <nav class="mlsapi-tool-sidebar" aria-label="<?php esc_attr_e( 'AI Tools', 'mlsapi-studio' ); ?>">
-                <button type="button" class="mlsapi-tool-btn active" data-tool="stage" data-label="Stage room">
-                    <span class="dashicons dashicons-admin-home"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Stage', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="restyle" data-label="Restyle room">
-                    <span class="dashicons dashicons-art"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Restyle', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="empty" data-label="Empty room">
-                    <span class="dashicons dashicons-grid-view"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Empty', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="declutter" data-label="Declutter room">
-                    <span class="dashicons dashicons-trash"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Declutter', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="wall-colors" data-label="Paint room">
-                    <span class="dashicons dashicons-color-picker"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Paint', 'mlsapi-studio' ); ?></span>
-                </button>
+            <!-- Left Tool Sidebar -->
+            <aside class="mlsapi-tool-sidebar" aria-label="<?php esc_attr_e( 'AI Studio Operations', 'mlsapi-studio' ); ?>">
+                <nav class="mlsapi-tool-nav">
+                    <button type="button" class="mlsapi-tool-item active" data-tool="stage" data-title="Room Staging">
+                        <?php esc_html_e( 'Room Staging', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="twilight" data-title="Dusk / Sky">
+                        <?php esc_html_e( 'Dusk / Sky', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="declutter" data-title="Declutter">
+                        <?php esc_html_e( 'Declutter', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="empty" data-title="Empty Room">
+                        <?php esc_html_e( 'Empty Room', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="restyle" data-title="Change Style">
+                        <?php esc_html_e( 'Change Style', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="replace-furniture" data-title="Replace Furniture">
+                        <?php esc_html_e( 'Replace Furniture', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="wall-colors" data-title="Paint Color">
+                        <?php esc_html_e( 'Paint Color', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="replace-material" data-title="Replace Materials">
+                        <?php esc_html_e( 'Replace Materials', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="floorplan-3d" data-title="Blueprint to 3D">
+                        <?php esc_html_e( 'Blueprint to 3D', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="creatives" data-title="Ad Creatives">
+                        <?php esc_html_e( 'Ad Creatives', 'mlsapi-studio' ); ?>
+                    </button>
+                    <button type="button" class="mlsapi-tool-item" data-tool="enhance-exterior" data-title="Enhance & 4K">
+                        <?php esc_html_e( 'Enhance & 4K', 'mlsapi-studio' ); ?>
+                    </button>
+                </nav>
 
-                <div class="mlsapi-tool-divider"></div>
+                <!-- Parameter Selection Boxes -->
+                <div class="mlsapi-sidebar-params">
+                    <!-- Design Style Param -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-style">
+                        <label class="mlsapi-param-label" for="mlsapi-param-style"><?php esc_html_e( 'Design Style', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-style" class="mlsapi-dark-select">
+                                <option value="modern" selected><?php esc_html_e( 'Modern', 'mlsapi-studio' ); ?></option>
+                                <option value="scandinavian"><?php esc_html_e( 'Scandinavian', 'mlsapi-studio' ); ?></option>
+                                <option value="luxury"><?php esc_html_e( 'Luxury', 'mlsapi-studio' ); ?></option>
+                                <option value="coastal"><?php esc_html_e( 'Coastal', 'mlsapi-studio' ); ?></option>
+                                <option value="farmhouse"><?php esc_html_e( 'Farmhouse', 'mlsapi-studio' ); ?></option>
+                                <option value="japandi"><?php esc_html_e( 'Japandi', 'mlsapi-studio' ); ?></option>
+                                <option value="mid_century_modern"><?php esc_html_e( 'Mid-Century Modern', 'mlsapi-studio' ); ?></option>
+                                <option value="minimalist"><?php esc_html_e( 'Minimalist', 'mlsapi-studio' ); ?></option>
+                                <option value="industrial"><?php esc_html_e( 'Industrial', 'mlsapi-studio' ); ?></option>
+                                <option value="mediterranean"><?php esc_html_e( 'Mediterranean', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
 
-                <button type="button" class="mlsapi-tool-btn" data-tool="twilight" data-label="Twilight conversion">
-                    <span class="dashicons dashicons-visibility"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Twilight', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="enhance-exterior" data-label="Enhance curb appeal">
-                    <span class="dashicons dashicons-palmtree"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Curb appeal', 'mlsapi-studio' ); ?></span>
-                </button>
+                    <!-- Room Type Param -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-room">
+                        <label class="mlsapi-param-label" for="mlsapi-param-room"><?php esc_html_e( 'Room Type', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-room" class="mlsapi-dark-select">
+                                <option value="living_room" selected><?php esc_html_e( 'Living Room', 'mlsapi-studio' ); ?></option>
+                                <option value="primary_bedroom"><?php esc_html_e( 'Primary Bedroom', 'mlsapi-studio' ); ?></option>
+                                <option value="bedroom"><?php esc_html_e( 'Bedroom', 'mlsapi-studio' ); ?></option>
+                                <option value="dining_room"><?php esc_html_e( 'Dining Room', 'mlsapi-studio' ); ?></option>
+                                <option value="kitchen"><?php esc_html_e( 'Kitchen', 'mlsapi-studio' ); ?></option>
+                                <option value="home_office"><?php esc_html_e( 'Home Office', 'mlsapi-studio' ); ?></option>
+                                <option value="bathroom"><?php esc_html_e( 'Bathroom', 'mlsapi-studio' ); ?></option>
+                                <option value="patio"><?php esc_html_e( 'Patio / Outdoor', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
 
-                <div class="mlsapi-tool-divider"></div>
+                    <!-- Furniture to Swap (Replace Furniture) -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-furniture-scope" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-furniture-scope"><?php esc_html_e( 'Furnishings to Replace', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-furniture-scope" class="mlsapi-dark-select">
+                                <option value="all" selected><?php esc_html_e( 'All Main Furnishings', 'mlsapi-studio' ); ?></option>
+                                <option value="seating"><?php esc_html_e( 'Sofas & Living Seating', 'mlsapi-studio' ); ?></option>
+                                <option value="dining"><?php esc_html_e( 'Dining Table & Chairs', 'mlsapi-studio' ); ?></option>
+                                <option value="bedroom"><?php esc_html_e( 'Beds & Nightstands', 'mlsapi-studio' ); ?></option>
+                                <option value="accents"><?php esc_html_e( 'Coffee Tables & Accents', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
 
-                <button type="button" class="mlsapi-tool-btn" data-tool="upscale" data-label="Upscale photo">
-                    <span class="dashicons dashicons-search"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( 'Upscale', 'mlsapi-studio' ); ?></span>
-                </button>
-                <button type="button" class="mlsapi-tool-btn" data-tool="floorplan-3d" data-label="3D floor plan">
-                    <span class="dashicons dashicons-building"></span>
-                    <span class="mlsapi-tool-name"><?php esc_html_e( '3D plan', 'mlsapi-studio' ); ?></span>
-                </button>
-            </nav>
+                    <!-- Twilight Mode Param -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-twilight" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-twilight-mode"><?php esc_html_e( 'Dusk Conversion Mode', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-twilight-mode" class="mlsapi-dark-select">
+                                <option value="day_to_dusk" selected><?php esc_html_e( 'Day to Twilight Dusk', 'mlsapi-studio' ); ?></option>
+                                <option value="blue_sky_replace"><?php esc_html_e( 'Blue Sky Replacement', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
 
-            <!-- Center: Canvas Viewport (Dropzone or Compare Slider) -->
+                    <!-- Target Surface (Replace Materials) -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-surface" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-surface"><?php esc_html_e( 'Target Surface', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-surface" class="mlsapi-dark-select">
+                                <option value="flooring" selected><?php esc_html_e( 'Flooring / Hardwood', 'mlsapi-studio' ); ?></option>
+                                <option value="countertops"><?php esc_html_e( 'Kitchen Countertops', 'mlsapi-studio' ); ?></option>
+                                <option value="accent_wall"><?php esc_html_e( 'Accent Wall / Paneling', 'mlsapi-studio' ); ?></option>
+                                <option value="backsplash"><?php esc_html_e( 'Kitchen Backsplash', 'mlsapi-studio' ); ?></option>
+                                <option value="tiles"><?php esc_html_e( 'Bathroom Vanity & Tiles', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Material Param (Replace Materials) -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-material" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-material"><?php esc_html_e( 'Replacement Material', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-material" class="mlsapi-dark-select">
+                                <option value="white_oak_herringbone" selected><?php esc_html_e( 'White Oak Herringbone', 'mlsapi-studio' ); ?></option>
+                                <option value="carrara_marble"><?php esc_html_e( 'Carrara White Marble', 'mlsapi-studio' ); ?></option>
+                                <option value="dark_walnut"><?php esc_html_e( 'Dark Walnut Wood', 'mlsapi-studio' ); ?></option>
+                                <option value="polished_concrete"><?php esc_html_e( 'Polished Concrete', 'mlsapi-studio' ); ?></option>
+                                <option value="calacatta_quartz"><?php esc_html_e( 'Calacatta Gold Quartz', 'mlsapi-studio' ); ?></option>
+                                <option value="slate_tile"><?php esc_html_e( 'Slate Gray Tile', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Paint Output View (Wall Colors) -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-wall-mode" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-wall-mode"><?php esc_html_e( 'Output View', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-wall-mode" class="mlsapi-dark-select">
+                                <option value="single" selected><?php esc_html_e( 'Single Color (Selected Below)', 'mlsapi-studio' ); ?></option>
+                                <option value="grid"><?php esc_html_e( '3×3 Comparison Grid (All 9)', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Wall Colors Param (Wall Colors) -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-wall" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-wall-color"><?php esc_html_e( 'Paint Color Choice', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-wall-color" class="mlsapi-dark-select">
+                                <option value="Alabaster White" selected><?php esc_html_e( 'Alabaster White (#F2EFE8)', 'mlsapi-studio' ); ?></option>
+                                <option value="Agreeable Gray"><?php esc_html_e( 'Agreeable Gray (#D1CBC1)', 'mlsapi-studio' ); ?></option>
+                                <option value="Hale Navy"><?php esc_html_e( 'Hale Navy (#303A45)', 'mlsapi-studio' ); ?></option>
+                                <option value="Sage Green"><?php esc_html_e( 'Sage Green (#9BA896)', 'mlsapi-studio' ); ?></option>
+                                <option value="Terracotta Blush"><?php esc_html_e( 'Terracotta Blush (#C48A76)', 'mlsapi-studio' ); ?></option>
+                                <option value="Charcoal Slate"><?php esc_html_e( 'Charcoal Slate (#40444B)', 'mlsapi-studio' ); ?></option>
+                                <option value="Warm Taupe"><?php esc_html_e( 'Warm Taupe (#B5A795)', 'mlsapi-studio' ); ?></option>
+                                <option value="Crisp Linen"><?php esc_html_e( 'Crisp Linen (#F7F5EE)', 'mlsapi-studio' ); ?></option>
+                                <option value="Moody Forest"><?php esc_html_e( 'Moody Forest (#2B3D34)', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Exterior Enhancement Param -->
+                    <div class="mlsapi-param-group" id="mlsapi-group-exterior" style="display: none;">
+                        <label class="mlsapi-param-label" for="mlsapi-param-exterior"><?php esc_html_e( 'Enhancement Focus', 'mlsapi-studio' ); ?></label>
+                        <div class="mlsapi-select-wrap">
+                            <select id="mlsapi-param-exterior" class="mlsapi-dark-select">
+                                <option value="all_enhancements" selected><?php esc_html_e( 'Full Curb Appeal Polish', 'mlsapi-studio' ); ?></option>
+                                <option value="green_grass"><?php esc_html_e( 'Lush Green Grass', 'mlsapi-studio' ); ?></option>
+                                <option value="blue_sky"><?php esc_html_e( 'Bright Blue Sky', 'mlsapi-studio' ); ?></option>
+                                <option value="clean_pool"><?php esc_html_e( 'Crystal Clear Pool', 'mlsapi-studio' ); ?></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Primary Generate Button -->
+                    <button type="button" id="mlsapi-generate-btn" class="mlsapi-btn-generate" disabled>
+                        <span class="mlsapi-btn-sparkle">✦</span>
+                        <span id="mlsapi-generate-btn-text"><?php esc_html_e( 'Generate asset', 'mlsapi-studio' ); ?></span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Center Workspace Canvas -->
             <main class="mlsapi-workspace">
                 
-                <!-- Placeholder / Empty Dropzone State -->
+                <!-- Initial Dropzone State -->
                 <div id="mlsapi-dropzone-state" class="mlsapi-dropzone-state">
                     <div class="mlsapi-dropzone-box">
                         <span class="dashicons dashicons-format-image mlsapi-dropzone-icon"></span>
                         <h3><?php esc_html_e( 'Select or Paste a Real Estate Photo', 'mlsapi-studio' ); ?></h3>
-                        <p><?php esc_html_e( 'Pick from the top listing ribbon, browse Media Library, drag & drop, or paste from clipboard (Ctrl+V).', 'mlsapi-studio' ); ?></p>
+                        <p><?php esc_html_e( 'Pick from Media Library, drag & drop, or paste from clipboard (Ctrl+V).', 'mlsapi-studio' ); ?></p>
                         <div class="mlsapi-dropzone-actions">
-                            <button type="button" id="mlsapi-select-media-btn" class="button button-primary button-hero">
+                            <button type="button" id="mlsapi-select-media-btn" class="mlsapi-btn-accent">
                                 <span class="dashicons dashicons-admin-media"></span> <?php esc_html_e( 'Select from Media Library', 'mlsapi-studio' ); ?>
                             </button>
                             <input type="file" id="mlsapi-file-input" accept="image/*" style="display:none;" />
-                            <button type="button" id="mlsapi-browse-file-btn" class="button button-secondary button-hero">
+                            <button type="button" id="mlsapi-browse-file-btn" class="mlsapi-btn-outline">
                                 <?php esc_html_e( 'Upload File', 'mlsapi-studio' ); ?>
                             </button>
                         </div>
@@ -104,184 +237,91 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                 <!-- Active Image View (Before / After Comparison Slider) -->
                 <div id="mlsapi-canvas-state" class="mlsapi-canvas-state" style="display: none;">
-                    <div class="mlsapi-compare-container" id="mlsapi-compare-viewer">
-                        <!-- Before (Original) Image -->
-                        <div class="mlsapi-compare-before">
-                            <img id="mlsapi-img-before" src="" alt="Original Photo" />
-                            <span class="mlsapi-compare-label"><?php esc_html_e( 'Before', 'mlsapi-studio' ); ?></span>
+                    <div class="mlsapi-canvas-card">
+                        <div class="mlsapi-compare-container" id="mlsapi-compare-viewer">
+                            <!-- Bottom Layer: After (Generated) Image -->
+                            <div class="mlsapi-compare-layer mlsapi-compare-after-layer" id="mlsapi-layer-after" style="display: none;">
+                                <img id="mlsapi-img-after" src="" alt="<?php esc_attr_e( 'AI Generated Photo', 'mlsapi-studio' ); ?>" />
+                            </div>
+                            
+                            <!-- Top Layer: Before (Original) Image (clipped with clip-path) -->
+                            <div class="mlsapi-compare-layer mlsapi-compare-before-layer" id="mlsapi-layer-before">
+                                <img id="mlsapi-img-before" src="" alt="<?php esc_attr_e( 'Original Photo', 'mlsapi-studio' ); ?>" />
+                            </div>
+
+                            <!-- Pill Tags -->
+                            <span class="mlsapi-compare-label mlsapi-label-before" id="mlsapi-label-before"><?php esc_html_e( 'Before', 'mlsapi-studio' ); ?></span>
+                            <span class="mlsapi-compare-label mlsapi-label-after" id="mlsapi-label-after" style="display: none;"><?php esc_html_e( 'After', 'mlsapi-studio' ); ?></span>
+
+                            <!-- Divider Line & Knob (displayed when comparison is active) -->
+                            <div class="mlsapi-compare-line" id="mlsapi-compare-line" style="display: none; left: 50%;">
+                                <div class="mlsapi-compare-knob">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 6l-6 6 6 6M15 6l6 6-6 6" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Native Range Slider on top for smooth mouse/touch drag -->
+                            <input type="range" class="mlsapi-compare-range" id="mlsapi-compare-range" min="0" max="100" step="0.1" value="50" style="display: none;" aria-label="<?php esc_attr_e( 'Drag to compare before and after', 'mlsapi-studio' ); ?>" />
                         </div>
-                        <!-- After (Generated) Image -->
-                        <div class="mlsapi-compare-after" id="mlsapi-compare-after-wrapper">
-                            <img id="mlsapi-img-after" src="" alt="AI Generated Photo" />
-                            <span class="mlsapi-compare-label"><?php esc_html_e( 'After', 'mlsapi-studio' ); ?></span>
-                            <!-- Optional compliance watermark preview badge -->
-                            <div class="mlsapi-watermark-badge" id="mlsapi-watermark-badge" style="display:none;">
-                                <?php esc_html_e( 'Virtually Staged', 'mlsapi-studio' ); ?>
+
+                        <!-- Processing Overlay Scoped to Canvas Viewport -->
+                        <div id="mlsapi-processing-overlay" class="mlsapi-processing-overlay" style="display: none;">
+                            <div class="mlsapi-spinner-wrap">
+                                <div class="mlsapi-spinner"></div>
+                                <h4 id="mlsapi-step-title"><?php esc_html_e( 'Generating asset...', 'mlsapi-studio' ); ?></h4>
+                                <p id="mlsapi-step-desc"><?php esc_html_e( 'Synthesizing architectural staging on mlsapi.dev', 'mlsapi-studio' ); ?></p>
+                                
+                                <!-- Progress Bar in Overlay Dialog -->
+                                <div class="mlsapi-dialog-progress">
+                                    <div class="mlsapi-dialog-progress-track">
+                                        <div class="mlsapi-dialog-progress-fill" id="mlsapi-overlay-progress-fill" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="mlsapi-dialog-progress-meta">
+                                        <span id="mlsapi-overlay-step-label"><?php esc_html_e( 'Initializing...', 'mlsapi-studio' ); ?></span>
+                                        <span id="mlsapi-overlay-percent">0%</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <!-- Split Slider Divider Handle -->
-                        <div class="mlsapi-compare-handle" id="mlsapi-compare-handle">
-                            <div class="mlsapi-compare-arrows"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Processing Overlay -->
-                <div id="mlsapi-processing-overlay" class="mlsapi-processing-overlay" style="display: none;">
-                    <div class="mlsapi-spinner-wrap">
-                        <div class="mlsapi-spinner"></div>
-                        <h4 id="mlsapi-step-title"><?php esc_html_e( 'Generating with AI...', 'mlsapi-studio' ); ?></h4>
-                        <p id="mlsapi-step-desc"><?php esc_html_e( 'Running neural rendering pipeline on mlsapi.dev', 'mlsapi-studio' ); ?></p>
-                        <div class="mlsapi-progress-bar-container">
-                            <div class="mlsapi-progress-bar" id="mlsapi-progress-bar" style="width: 15%;"></div>
-                        </div>
-                        <span id="mlsapi-progress-percent" class="mlsapi-progress-percent">15%</span>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Right Sidebar: Configuration Panel -->
-            <aside class="mlsapi-param-sidebar">
-                <div class="mlsapi-param-header">
-                    <h2 id="mlsapi-current-tool-title"><?php esc_html_e( 'Stage room', 'mlsapi-studio' ); ?></h2>
-                    <p id="mlsapi-current-tool-desc" class="mlsapi-param-subtitle">
-                        <?php esc_html_e( 'Furnish an empty room', 'mlsapi-studio' ); ?>
-                    </p>
-                </div>
-
-                <!-- Scrollable Parameter Fields Container -->
-                <div class="mlsapi-param-fields" id="mlsapi-param-fields">
-                    
-                    <!-- Room Dropdown (Stage, Restyle, Empty, Declutter, Paint) -->
-                    <div class="mlsapi-field-group" data-tools="stage,restyle,empty,declutter,wall-colors">
-                        <label for="mlsapi-param-room"><?php esc_html_e( 'Room', 'mlsapi-studio' ); ?></label>
-                        <div class="mlsapi-select-wrapper">
-                            <select id="mlsapi-param-room" class="mlsapi-select">
-                                <option value="living_room" selected><?php esc_html_e( 'Living Room', 'mlsapi-studio' ); ?></option>
-                                <option value="primary_bedroom"><?php esc_html_e( 'Primary Bedroom', 'mlsapi-studio' ); ?></option>
-                                <option value="bedroom"><?php esc_html_e( 'Bedroom', 'mlsapi-studio' ); ?></option>
-                                <option value="dining_room"><?php esc_html_e( 'Dining Room', 'mlsapi-studio' ); ?></option>
-                                <option value="kitchen"><?php esc_html_e( 'Kitchen', 'mlsapi-studio' ); ?></option>
-                                <option value="home_office"><?php esc_html_e( 'Home Office', 'mlsapi-studio' ); ?></option>
-                                <option value="patio"><?php esc_html_e( 'Outdoor Patio / Deck', 'mlsapi-studio' ); ?></option>
-                                <option value="bathroom"><?php esc_html_e( 'Bathroom', 'mlsapi-studio' ); ?></option>
-                            </select>
-                        </div>
                     </div>
 
-                    <!-- Style Pill Chips Selector (Stage, Restyle, 3D Plan) -->
-                    <div class="mlsapi-field-group" data-tools="stage,restyle,floorplan-3d">
-                        <label><?php esc_html_e( 'Style', 'mlsapi-studio' ); ?></label>
-                        <input type="hidden" id="mlsapi-param-style" value="scandinavian" />
-                        <div class="mlsapi-pill-grid" id="mlsapi-style-pills">
-                            <button type="button" class="mlsapi-pill active" data-style="scandinavian"><?php esc_html_e( 'Scandinavian', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="modern"><?php esc_html_e( 'Modern', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="luxury"><?php esc_html_e( 'Luxury', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="coastal"><?php esc_html_e( 'Coastal', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="farmhouse"><?php esc_html_e( 'Modern Farmhouse', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="japandi"><?php esc_html_e( 'Japandi', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="mid_century_modern"><?php esc_html_e( 'Mid-Century', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="minimalist"><?php esc_html_e( 'Minimalist', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="industrial"><?php esc_html_e( 'Industrial', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-style="mediterranean"><?php esc_html_e( 'Mediterranean', 'mlsapi-studio' ); ?></button>
-                        </div>
+                    <!-- Multiple Paint Swatches Strip (Dynamic for wall-colors) -->
+                    <div class="mlsapi-swatches-strip" id="mlsapi-swatches-strip" style="display: none;">
+                        <span class="mlsapi-swatches-label"><?php esc_html_e( 'Select Paint Variation:', 'mlsapi-studio' ); ?></span>
+                        <div class="mlsapi-swatches-list" id="mlsapi-swatches-list"></div>
                     </div>
 
-                    <!-- Twilight Mode Selector -->
-                    <div class="mlsapi-field-group" data-tools="twilight" style="display: none;">
-                        <label><?php esc_html_e( 'Lighting Mode', 'mlsapi-studio' ); ?></label>
-                        <input type="hidden" id="mlsapi-param-twilight-mode" value="day_to_dusk" />
-                        <div class="mlsapi-pill-grid" id="mlsapi-twilight-pills">
-                            <button type="button" class="mlsapi-pill active" data-twilight="day_to_dusk"><?php esc_html_e( 'Day to Dusk', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-twilight="blue_sky_replace"><?php esc_html_e( 'Blue Sky Replace', 'mlsapi-studio' ); ?></button>
+                    <!-- Progress Bar Row -->
+                    <div class="mlsapi-progress-row">
+                        <span class="mlsapi-status-label" id="mlsapi-step-label"><?php esc_html_e( 'ready', 'mlsapi-studio' ); ?></span>
+                        <div class="mlsapi-progress-track">
+                            <div class="mlsapi-progress-fill" id="mlsapi-progress-fill" style="width: 0%;"></div>
                         </div>
+                        <span class="mlsapi-status-pct" id="mlsapi-progress-percent">0%</span>
                     </div>
 
-                    <!-- Curb Appeal Retouch Features -->
-                    <div class="mlsapi-field-group" data-tools="enhance-exterior" style="display: none;">
-                        <label><?php esc_html_e( 'Exterior Retouch Items', 'mlsapi-studio' ); ?></label>
-                        <div class="mlsapi-checkbox-group">
-                            <label class="mlsapi-checkbox-row">
-                                <input type="checkbox" id="mlsapi-curb-lawn" checked />
-                                <span><?php esc_html_e( 'Green grass & lawn repair', 'mlsapi-studio' ); ?></span>
-                            </label>
-                            <label class="mlsapi-checkbox-row">
-                                <input type="checkbox" id="mlsapi-curb-sky" checked />
-                                <span><?php esc_html_e( 'Sunny blue sky replacement', 'mlsapi-studio' ); ?></span>
-                            </label>
-                            <label class="mlsapi-checkbox-row">
-                                <input type="checkbox" id="mlsapi-curb-pool" checked />
-                                <span><?php esc_html_e( 'Clean & sparkling pool water', 'mlsapi-studio' ); ?></span>
-                            </label>
-                        </div>
-                    </div>
+                    <!-- Footer Action Toolbar -->
+                    <div class="mlsapi-workspace-footer">
+                        <input type="hidden" id="mlsapi-output-format" value="webp" />
 
-                    <!-- Empty Room Flooring -->
-                    <div class="mlsapi-field-group" data-tools="empty" style="display: none;">
-                        <label><?php esc_html_e( 'Restore Flooring', 'mlsapi-studio' ); ?></label>
-                        <input type="hidden" id="mlsapi-param-flooring" value="hardwood" />
-                        <div class="mlsapi-pill-grid" id="mlsapi-flooring-pills">
-                            <button type="button" class="mlsapi-pill active" data-flooring="hardwood"><?php esc_html_e( 'Hardwood', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-flooring="tile"><?php esc_html_e( 'Tile', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-flooring="carpet"><?php esc_html_e( 'Carpet', 'mlsapi-studio' ); ?></button>
-                            <button type="button" class="mlsapi-pill" data-flooring="polished_concrete"><?php esc_html_e( 'Concrete', 'mlsapi-studio' ); ?></button>
-                        </div>
-                    </div>
-
-                    <!-- Freeform Prompt: "Anything specific? (optional)" -->
-                    <div class="mlsapi-field-group">
-                        <label for="mlsapi-param-notes"><?php esc_html_e( 'Anything specific? (optional)', 'mlsapi-studio' ); ?></label>
-                        <input type="text" id="mlsapi-param-notes" class="mlsapi-input" placeholder="<?php esc_attr_e( 'Light oak dining table, linen sofa, a big...', 'mlsapi-studio' ); ?>" />
-                    </div>
-
-                    <!-- MLS Compliance Watermark Notice -->
-                    <div class="mlsapi-compliance-notice" id="mlsapi-compliance-notice">
-                        <div class="mlsapi-compliance-text">
-                            <?php esc_html_e( 'Adds the caption "Virtually staged" when it goes on the listing. Most MLSs require it.', 'mlsapi-studio' ); ?>
-                        </div>
-                        <label class="mlsapi-compliance-toggle">
-                            <input type="checkbox" id="mlsapi-include-watermark" checked />
-                            <span><?php esc_html_e( 'Include watermark', 'mlsapi-studio' ); ?></span>
-                        </label>
-                    </div>
-
-                </div>
-
-                <!-- Bottom Action Box -->
-                <div class="mlsapi-sidebar-footer">
-                    <button type="button" id="mlsapi-generate-btn" class="mlsapi-btn-primary" disabled>
-                        <span class="mlsapi-star-icon">✦</span>
-                        <span id="mlsapi-generate-btn-text"><?php esc_html_e( 'Stage room', 'mlsapi-studio' ); ?></span>
-                    </button>
-                    <p class="mlsapi-disclaimer-subtext">
-                        <?php esc_html_e( 'Edits this listing photo. Your original stays as it is.', 'mlsapi-studio' ); ?>
-                    </p>
-
-                    <!-- Save / Output Actions (Revealed after generation) -->
-                    <div class="mlsapi-output-actions" id="mlsapi-output-actions" style="display: none;">
-                        <div class="mlsapi-format-row">
-                            <span><?php esc_html_e( 'Export format:', 'mlsapi-studio' ); ?></span>
-                            <select id="mlsapi-output-format" class="mlsapi-select-mini">
-                                <option value="webp" selected>WebP</option>
-                                <option value="png">PNG</option>
-                                <option value="jpg">JPG</option>
-                            </select>
-                        </div>
-                        <div class="mlsapi-output-buttons">
-                            <button type="button" id="mlsapi-save-btn" class="button button-primary">
-                                <?php esc_html_e( 'Save to Media Library', 'mlsapi-studio' ); ?>
+                        <!-- Action Buttons -->
+                        <div class="mlsapi-action-buttons">
+                            <button type="button" id="mlsapi-save-btn" class="mlsapi-btn-save">
+                                <?php esc_html_e( 'Save as new', 'mlsapi-studio' ); ?>
                             </button>
-                            <button type="button" id="mlsapi-replace-btn" class="button button-secondary" style="display: none;">
-                                <?php esc_html_e( 'Replace Original', 'mlsapi-studio' ); ?>
+                            <button type="button" id="mlsapi-replace-btn" class="mlsapi-btn-secondary" style="display: none;">
+                                <?php esc_html_e( 'Replace original', 'mlsapi-studio' ); ?>
                             </button>
-                            <button type="button" id="mlsapi-download-btn" class="button button-secondary">
+                            <button type="button" id="mlsapi-download-btn" class="mlsapi-btn-secondary">
                                 <?php esc_html_e( 'Download', 'mlsapi-studio' ); ?>
                             </button>
                         </div>
                     </div>
                 </div>
 
-            </aside>
+            </main>
         </div>
 
     </div>
