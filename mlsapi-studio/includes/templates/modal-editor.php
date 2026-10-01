@@ -287,9 +287,9 @@ if ( ! defined( 'ABSPATH' ) ) {
                         </div>
                     </div>
 
-                    <!-- Multiple Paint Swatches Strip (Dynamic for wall-colors) -->
+                    <!-- Multiple Paint Swatches / Render Views Strip -->
                     <div class="mlsapi-swatches-strip" id="mlsapi-swatches-strip" style="display: none;">
-                        <span class="mlsapi-swatches-label"><?php esc_html_e( 'Select Paint Variation:', 'mlsapi-studio' ); ?></span>
+                        <span class="mlsapi-swatches-label" id="mlsapi-swatches-label"><?php esc_html_e( 'Select Variation:', 'mlsapi-studio' ); ?></span>
                         <div class="mlsapi-swatches-list" id="mlsapi-swatches-list"></div>
                     </div>
 

@@ -436,7 +436,15 @@
             var outUrl = null;
             var tool = this.state.activeTool;
 
-            if (tool === 'wall-colors') {
+            if (!result) {
+                alert('Job completed, but received empty response payload.');
+                return;
+            }
+
+            // In case result is a direct URL string
+            if (typeof result === 'string' && (result.indexOf('http') === 0 || result.indexOf('data:image') === 0)) {
+                outUrl = result;
+            } else if (tool === 'wall-colors') {
                 var wallMode = $('#mlsapi-param-wall-mode').val() || 'single';
                 var chosenColor = $('#mlsapi-param-wall-color').val();
 
@@ -463,6 +471,38 @@
                 } else {
                     outUrl = result.comparison_grid_3x3_url || result.image_url;
                 }
+            } else if (tool === 'floorplan-3d') {
+                outUrl = result.isometric_3d_dollhouse_url ||
+                         result.thumbnail_url ||
+                         result.render_3d_url ||
+                         (result.room_renders && result.room_renders[0] ? result.room_renders[0].image_url : null) ||
+                         result.image_url;
+
+                // Render variation chips if dollhouse and room renders exist
+                var rendersList = [];
+                if (result.isometric_3d_dollhouse_url) {
+                    rendersList.push({
+                        label: '3D Dollhouse',
+                        image_url: result.isometric_3d_dollhouse_url,
+                        icon: 'dashicons-admin-home'
+                    });
+                }
+                if (result.room_renders && result.room_renders.length > 0) {
+                    result.room_renders.forEach(function(r) {
+                        if (r.image_url) {
+                            rendersList.push({
+                                label: r.room_name || 'Room Render',
+                                image_url: r.image_url
+                            });
+                        }
+                    });
+                }
+
+                if (rendersList.length > 1) {
+                    this.renderVariationChips(rendersList, outUrl, 'Select 3D View / Room:');
+                } else {
+                    $('#mlsapi-swatches-strip').hide();
+                }
             } else {
                 $('#mlsapi-swatches-strip').hide();
                 outUrl = result.staged_photo_url ||
@@ -471,10 +511,16 @@
                          result.empty_photo_url ||
                          result.retyped_photo_url ||
                          result.updated_room_photo_url ||
+                         result.isometric_3d_dollhouse_url ||
                          result.render_3d_url ||
+                         result.thumbnail_url ||
+                         (result.room_renders && result.room_renders[0] ? result.room_renders[0].image_url : null) ||
                          result.upscaled_image_url ||
                          result.comparison_grid_3x3_url ||
-                         result.image_url;
+                         result.image_url ||
+                         result.output_url ||
+                         result.url ||
+                         result.photo_url;
             }
 
             if (!outUrl) {
@@ -485,33 +531,44 @@
             this.state.generatedImageUrl = outUrl;
 
             var toolTitle = $('.mlsapi-tool-item.active').data('title') || 'After';
+            if (tool === 'floorplan-3d') {
+                toolTitle = '3D Dollhouse';
+            }
+
             if (window.MLSAPICompareSlider) {
                 window.MLSAPICompareSlider.enableComparison(this.state.originalImageUrl, outUrl, toolTitle);
             }
         },
 
-        renderSwatchBar: function(swatches, currentUrl) {
+        renderVariationChips: function(items, currentUrl, labelText) {
             var self = this;
             var $strip = $('#mlsapi-swatches-strip');
             var $list = $('#mlsapi-swatches-list');
+            var $label = $('#mlsapi-swatches-label');
+
+            if ($label.length && labelText) {
+                $label.text(labelText);
+            }
             $list.empty();
 
-            swatches.forEach(function(s) {
-                if (!s.image_url) return;
-                var isActive = (s.image_url === currentUrl);
+            items.forEach(function(item) {
+                if (!item.image_url) return;
+                var isActive = (item.image_url === currentUrl);
                 var $chip = $('<button type="button" class="mlsapi-swatch-chip' + (isActive ? ' active' : '') + '"></button>');
-                if (s.hex) {
-                    $chip.append('<span class="mlsapi-swatch-dot" style="background-color: ' + s.hex + ';"></span>');
+                if (item.hex) {
+                    $chip.append('<span class="mlsapi-swatch-dot" style="background-color: ' + item.hex + ';"></span>');
+                } else if (item.icon) {
+                    $chip.append('<span class="dashicons ' + item.icon + '" style="font-size: 13px; width: 13px; height: 13px; line-height: 13px; vertical-align: middle;"></span>');
                 }
-                $chip.append('<span>' + (s.color_name || 'Swatch') + '</span>');
+                $chip.append('<span>' + (item.label || 'View') + '</span>');
 
                 $chip.on('click', function() {
                     $('.mlsapi-swatch-chip').removeClass('active');
                     $(this).addClass('active');
-                    self.state.generatedImageUrl = s.image_url;
-                    var toolTitle = s.color_name || 'Paint Swatch';
+                    self.state.generatedImageUrl = item.image_url;
+                    var viewTitle = item.label || '3D Render';
                     if (window.MLSAPICompareSlider) {
-                        window.MLSAPICompareSlider.enableComparison(self.state.originalImageUrl, s.image_url, toolTitle);
+                        window.MLSAPICompareSlider.enableComparison(self.state.originalImageUrl, item.image_url, viewTitle);
                     }
                 });
 
@@ -519,6 +576,17 @@
             });
 
             $strip.show();
+        },
+
+        renderSwatchBar: function(swatches, currentUrl) {
+            var items = swatches.map(function(s) {
+                return {
+                    label: s.color_name || 'Swatch',
+                    image_url: s.image_url,
+                    hex: s.hex || null
+                };
+            });
+            this.renderVariationChips(items, currentUrl, 'Select Paint Variation:');
         },
 
         saveResult: function(replaceOriginal) {

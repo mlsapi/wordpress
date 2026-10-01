@@ -3,7 +3,7 @@
  * Plugin Name: MLS API Studio – AI Real Estate Image Staging & Enhancement
  * Plugin URI:  https://mlsapi.dev
  * Description: AI-powered virtual staging, dusk/twilight conversion, decluttering, restyling, floor plan 3D renders, and photo enhancement for real estate listings.
- * Version:     1.1.2
+ * Version:     1.1.3
  * Author:      mlsapi.dev
  * Author URI:  https://mlsapi.dev
  * License:     GPL-2.0+
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Plugin Constants
-define( 'MLSAPI_VERSION', '1.1.2' );
+define( 'MLSAPI_VERSION', '1.1.3' );
 define( 'MLSAPI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MLSAPI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'MLSAPI_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
